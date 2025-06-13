@@ -1,0 +1,90 @@
+package main
+
+import (
+	"fmt"
+	"time"
+
+	// vapi "github.com/hashicorp/vault/api"
+	_ "github.com/joho/godotenv/autoload"
+	vapi "github.com/openbao/openbao/api/v2"
+)
+
+const (
+	defaultCheckInterval  = 30 * time.Second
+	defaultTimeout        = 15 * time.Second
+	configRefreshInterval = 15 * time.Second
+	minimumNodes          = 3
+)
+
+// Config is a combo of the flags passed to the cli and the configuration file (if used).
+type Config struct {
+	Version    bool   `short:"v" long:"version" description:"display the version of vault-unseal and exit"`
+	Debug      bool   `short:"D" long:"debug" description:"enable debugging (extra logging)"`
+	ConfigPath string `env:"CONFIG_PATH" short:"c" long:"config" description:"path to configuration file" value-name:"PATH"`
+
+	Log struct {
+		Path   string `env:"LOG_PATH"  long:"path"    description:"path to log output to" value-name:"PATH"`
+		Quiet  bool   `env:"LOG_QUIET" long:"quiet"   description:"disable logging to stdout (also: see levels)"`
+		Level  string `env:"LOG_LEVEL" long:"level"   default:"info" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal"  description:"logging level"`
+		JSON   bool   `env:"LOG_JSON"   long:"json"   description:"output logs in JSON format"`
+		Pretty bool   `env:"LOG_PRETTY" long:"pretty" description:"output logs in a pretty colored format (cannot be easily parsed)"`
+	} `group:"Logging Options" namespace:"log"`
+
+	Environment string `env:"ENVIRONMENT" long:"environment" description:"environment this cluster relates to (for logging)" yaml:"environment"`
+
+	CheckInterval    time.Duration `env:"CHECK_INTERVAL"     long:"check-interval" description:"frequency of sealed checks against nodes" yaml:"check_interval"`
+	MaxCheckInterval time.Duration `env:"MAX_CHECK_INTERVAL" long:"max-check-interval" description:"max time that vault-unseal will wait for an unseal check/attempt" yaml:"max_check_interval"`
+
+	AllowSingleNode bool     `env:"ALLOW_SINGLE_NODE" long:"allow-single-node"    description:"allow vault-unseal to run on a single node" yaml:"allow_single_node" hidden:"true"`
+	Nodes           []string `env:"NODES"             long:"nodes" env-delim:","  description:"nodes to connect/provide tokens to (can be provided multiple times & uses comma-separated string for environment variable)" yaml:"vault_nodes"`
+	TLSSkipVerify   bool     `env:"TLS_SKIP_VERIFY"   long:"tls-skip-verify"      description:"disables tls certificate validation: DO NOT DO THIS" yaml:"tls_skip_verify"`
+	Tokens          []string `env:"TOKENS"            long:"tokens" env-delim:"," description:"tokens to provide to nodes (can be provided multiple times & uses comma-separated string for environment variable)" yaml:"unseal_tokens"`
+
+	NotifyMaxElapsed time.Duration `env:"NOTIFY_MAX_ELAPSED" long:"notify-max-elapsed" description:"max time before the notification can be queued before it is sent" yaml:"notify_max_elapsed"`
+	NotifyQueueDelay time.Duration `env:"NOTIFY_QUEUE_DELAY" long:"notify-queue-delay" description:"time we queue the notification to allow as many notifications to be sent in one go (e.g. if no notification within X time, send all notifications)" yaml:"notify_queue_delay"`
+
+	Email struct {
+		Enabled       bool     `env:"EMAIL_ENABLED"         long:"enabled"         description:"enables email support" yaml:"enabled"`
+		Hostname      string   `env:"EMAIL_HOSTNAME"        long:"hostname"        description:"hostname of mail server" yaml:"hostname"`
+		Port          int      `env:"EMAIL_PORT"            long:"port"            description:"port of mail server" yaml:"port"`
+		Username      string   `env:"EMAIL_USERNAME"        long:"username"        description:"username to authenticate to mail server" yaml:"username"`
+		Password      string   `env:"EMAIL_PASSWORD"        long:"password"        description:"password to authenticate to mail server" yaml:"password"`
+		FromAddr      string   `env:"EMAIL_FROM_ADDR"       long:"from-addr"       description:"address to use as 'From'" yaml:"from_addr"`
+		SendAddrs     []string `env:"EMAIL_SEND_ADDRS"      long:"send-addrs"      description:"addresses to send notifications to" yaml:"send_addrs"`
+		TLSSkipVerify bool     `env:"EMAIL_TLS_SKIP_VERIFY" long:"tls-skip-verify" description:"skip SMTP TLS certificate validation" yaml:"tls_skip_verify"`
+		MandatoryTLS  bool     `env:"EMAIL_MANDATORY_TLS"   long:"mandatory-tls"   description:"require TLS for SMTP connections. Defaults to opportunistic." yaml:"mandatory_tls"`
+	} `group:"Email Options" namespace:"email" yaml:"email"`
+
+	lastModifiedCheck time.Time
+}
+
+var (
+	conf = &Config{CheckInterval: defaultCheckInterval}
+
+	// logger log.Interface
+)
+
+func newVault(addr string) (vault *vapi.Client) {
+	var err error
+
+	vconfig := vapi.DefaultConfig()
+	vconfig.Address = addr
+	vconfig.MaxRetries = 0
+	vconfig.Timeout = defaultTimeout
+
+	if err = vconfig.ConfigureTLS(&vapi.TLSConfig{Insecure: conf.TLSSkipVerify}); err != nil {
+		// logger.WithError(err).Fatal("error initializing tls config")
+		fmt.Printf("error initializing tls config %v", err)
+	}
+
+	if vault, err = vapi.NewClient(vconfig); err != nil {
+		// logger.Fatalf("error creating vault client: %v", err)
+		fmt.Printf("Error creating vault client: %v", err)
+	}
+
+	return vault
+}
+
+func main() {
+	fmt.Println("Welcome to Seals")
+}
