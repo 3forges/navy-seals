@@ -68,7 +68,7 @@ helm install ${HELM_RELEASE_NAME} openbao/openbao --version ${DESIRED_CHART_VERS
 
 
 # helm delete ${HELM_RELEASE_NAME} -n ${K8S_NS}
-# kubectl -n ${K8S_NS} port-forward service/pesto-openbao --address=192.168.1.16 8200:8200
+# kubectl -n ${K8S_NS} port-forward service/${HELM_RELEASE_NAME} --address=192.168.1.16 8200:8200
 
 helm get manifest -n ${K8S_NS} ${HELM_RELEASE_NAME}
 helm status -n ${K8S_NS} ${HELM_RELEASE_NAME}
@@ -129,6 +129,7 @@ helm delete ${HELM_RELEASE_NAME} -n ${K8S_NS}
 
 kubectl -n ${K8S_NS} delete persistentvolumeclaim/data-${HELM_RELEASE_NAME}-0
 
+# kubectl -n pesto-openbao delete persistentvolumeclaim/data-pesto-openbao-0
 
 ```
 
@@ -151,6 +152,6 @@ make
 
 ```
 
-NExt steps:
+Next steps:
 
 Use https://github.com/yeqown/go-qrcode to generate QR code for each Unseal Key ?

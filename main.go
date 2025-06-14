@@ -12,6 +12,10 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	_ "github.com/joho/godotenv/autoload"
 	vapi "github.com/openbao/openbao/api/v2"
+
+	// QR CODES
+	qrcode "github.com/yeqown/go-qrcode/v2"
+	standard "github.com/yeqown/go-qrcode/writer/standard"
 )
 
 var (
@@ -52,6 +56,7 @@ type Config struct {
 	UnsealTokens       []string `env:"UNSEAL_TOKENS"            long:"unseal-tokens" env-delim:"," description:"tokens to provide to nodes (can be provided multiple times & uses comma-separated string for environment variable)" yaml:"unseal_tokens"`
 	UnsealkeysNb       int      `env:"UNSEAL_KEYS_NB"            long:"unseal-keys-nb" description:"number of shared keys to init the openbao vault with (integer, maximum 256)" yaml:"unseal_keys_nb"`
 	UnsealKeysTreshold int      `env:"UNSEAL_KEYS_TRESHOLD"            long:"unseal-keys-treshold" description:"treshold of shared keys to init the openbao vault with (integer, maximum 256)" yaml:"unseal_keys_treshold"`
+	ForceInit          bool     `env:"FORCE_INIT"   long:"force-init"      description:"Forces initialization, meaning it decomissions the vault and redeploys its from scratch: This means tahat all dta will be lost! ‼️Beware‼️!" yaml:"force_init"`
 
 	NotifyMaxElapsed time.Duration `env:"NOTIFY_MAX_ELAPSED" long:"notify-max-elapsed" description:"max time before the notification can be queued before it is sent" yaml:"notify_max_elapsed"`
 	NotifyQueueDelay time.Duration `env:"NOTIFY_QUEUE_DELAY" long:"notify-queue-delay" description:"time we queue the notification to allow as many notifications to be sent in one go (e.g. if no notification within X time, send all notifications)" yaml:"notify_queue_delay"`
@@ -149,11 +154,9 @@ func showVaultStatus(addr string) {
  **/
 // func unsealVault(addr string) (*vapi.SealStatusResponse, error) {
 func unsealVault(addr string) bool {
+	var wasVaultSuccessfullyUnsealed bool = false
+
 	client := newVault(addr)
-	// toReturn, err := client.Sys().EnableAuth()
-	// theUnsealTokens := conf.UnsealTokens
-	//response, err := client.Sys().Unseal("uCnIbTAyd3RgYLBv/GneFAqQ0uWEvmEQG1bg15MN3E4=")
-	var wasVaultSuccessfullyUnsealed bool
 
 	var numberOfUnsealTokens = len(conf.UnsealTokens)
 	fmt.Printf("🏈💪 Navy-Seals 💪🏈📣 - [func unsealVault(addr string) bool] - numberOfUnsealTokens : %v", numberOfUnsealTokens)
@@ -175,7 +178,6 @@ func unsealVault(addr string) bool {
 		}
 	}
 
-	// fmt.Printf("The %v vault was successfully unsealed!", addr)
 	return wasVaultSuccessfullyUnsealed
 }
 
@@ -185,26 +187,60 @@ func unsealVault(addr string) bool {
  **/
 func initVault(addr string) (*vapi.InitResponse, error) {
 	client := newVault(addr)
-	// toReturn, err := client.Sys().EnableAuth()
-	// theUnsealTokens := conf.UnsealTokens
-	//response, err := client.Sys().Unseal("uCnIbTAyd3RgYLBv/GneFAqQ0uWEvmEQG1bg15MN3E4=")
+	var initResponse *vapi.InitResponse = nil
+	var initErr error = nil
 
-	var initRequest = new(vapi.InitRequest)
-	initRequest.SecretShares = conf.UnsealkeysNb
-	initRequest.SecretThreshold = conf.UnsealKeysTreshold
-	var response *vapi.InitResponse
-	var err error
-	response, err = client.Sys().Init(initRequest)
-	//var wasVaultSuccessfullyInitialized bool
-
-	if err == nil {
-
-		fmt.Printf("🏈💪 Navy-Seals 💪🏈📣 - [func initVault(addr string)] - successfully init vault : %v", response)
-	} else {
-		fmt.Printf("🏈💥 Navy-Seals 💥🏈📣 - ERROR - [func initVault(addr string)] - failed to init vault : %v", response)
+	statusResponse, statusErr := getVaultStatus(addr)
+	if statusErr != nil {
+		fmt.Println(fmt.Errorf("🏈💥 Navy-Seals 💥🏈📣 - ERROR querying vault status key on %v: %v", addr, statusResponse))
+		os.Exit(7)
 	}
 
-	return response, err
+	if !statusResponse.Initialized {
+		var initRequest = new(vapi.InitRequest)
+		initRequest.SecretShares = conf.UnsealkeysNb
+		initRequest.SecretThreshold = conf.UnsealKeysTreshold
+
+		initResponse, initErr = client.Sys().Init(initRequest)
+		//var wasVaultSuccessfullyInitialized bool
+		if initErr == nil {
+			fmt.Printf("🏈💪 Navy-Seals 💪🏈📣 - [func initVault(addr string)] - successfully init vault : %v", initResponse)
+			var generatedKeys []string = initResponse.KeysB64
+
+			for i := 0; i < len(generatedKeys); i++ {
+				generateQRCode(generatedKeys[i], fmt.Sprintf("unseal_key_%v", i))
+			}
+		} else {
+			fmt.Printf("🏈💥 Navy-Seals 💥🏈📣 - ERROR - [func initVault(addr string)] - failed to init vault : %v, %v", initResponse, initErr)
+		}
+	} else {
+		fmt.Println(fmt.Errorf("🏈❕ Navy-Seals ❕🏈📣 - WARNING vault already initialized, cancel initializing it: %v", addr))
+		// os.Exit(11)
+	}
+
+	return initResponse, initErr
+}
+
+func generateQRCode(unsealKey_B64 string, key_name string) (string, error) {
+	var imgFilePath string = fmt.Sprintf("./.sunseal_keys/%v.jpeg", key_name)
+	qrc, err := qrcode.New(fmt.Sprintf("https://kairos/qrcode/%v", unsealKey_B64))
+	if err != nil {
+		fmt.Printf("could not generate QRCode: %v", err)
+		return imgFilePath, err
+	}
+	os.MkdirAll("./.sunseal_keys/", os.ModePerm)
+	w, errCreatingFile := standard.New(imgFilePath)
+	if errCreatingFile != nil {
+		fmt.Printf("standard.New failed: %v", errCreatingFile)
+		return imgFilePath, errCreatingFile
+	}
+	// save file
+	if errSavingImgToFile := qrc.Save(w); errSavingImgToFile != nil {
+		fmt.Printf("could not save image: %v", errSavingImgToFile)
+		return imgFilePath, errSavingImgToFile
+	}
+
+	return imgFilePath, nil
 }
 
 func main() {
@@ -222,7 +258,7 @@ func main() {
 		fmt.Printf("(Navy)-Seals version: %s [%s] (%s, %s), compiled %s\n", version, commit, runtime.GOOS, runtime.GOARCH, date) //nolint:forbidigo
 		os.Exit(0)
 	}
-	// initVault("http://192.168.1.16:8200")
+	initVault("http://192.168.1.16:8200")
 	showVaultStatus("http://192.168.1.16:8200")
 	sealVault("http://192.168.1.16:8200")
 	fmt.Println()
