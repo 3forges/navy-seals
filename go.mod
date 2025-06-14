@@ -4,7 +4,10 @@ go 1.24
 
 toolchain go1.24.3
 
-require github.com/openbao/openbao/api/v2 v2.3.0
+require (
+	github.com/joho/godotenv v1.5.1
+	github.com/openbao/openbao/api/v2 v2.3.0
+)
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
@@ -17,7 +20,6 @@ require (
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
 	github.com/hashicorp/hcl v1.0.1-vault-5 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect

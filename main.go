@@ -85,6 +85,72 @@ func newVault(addr string) (vault *vapi.Client) {
 	return vault
 }
 
+func getVaultStatus(addr string) (*vapi.HealthResponse, error) {
+	client := newVault(addr)
+
+	toReturn, err := client.Sys().Health()
+	if err != nil {
+		// logger.Fatalf("error creating vault client: %v", err)
+		fmt.Printf("Error getting vault health: %v", err)
+	}
+	return toReturn, err
+
+}
+
+func sealVault(addr string) {
+	client := newVault(addr)
+
+	// toReturn, err := client.Sys().EnableAuth()
+	err := client.Sys().Seal()
+	if err != nil {
+		// logger.Fatalf("error creating vault client: %v", err)
+		fmt.Printf("Error sealing vault: %v", err)
+	}
+	fmt.Printf("The %v vault was successfully sealed!", addr)
+}
+func showVaultStatus(addr string) {
+	response, err := getVaultStatus(addr)
+	if err != nil {
+		// logger.Fatalf("error creating vault client: %v", err)
+		fmt.Printf("Error getting vault health: %v", err)
+	} else {
+		fmt.Printf("🚑 Here is the vault health [response.Initialized] : %v", response.Initialized)
+		fmt.Println()
+		fmt.Printf("🚑 Here is the vault health [response.ClusterName] : %v", response.ClusterName)
+		fmt.Println()
+		fmt.Printf("🚑 Here is the vault health [response.Sealed] : %v", response.Sealed)
+		fmt.Println()
+		fmt.Printf("🚑 Here is the vault health [response.Version] : %v", response.Version)
+		fmt.Println()
+		fmt.Printf("🚑 Here is the vault health [response.ServerTimeUTC] : %v", response.ServerTimeUTC)
+		fmt.Println()
+		fmt.Printf("🚑 Here is the vault health [response.Standby] : %v", response.Standby)
+	}
+}
+func unsealVault(addr string) (*vapi.SealStatusResponse, error) {
+	client := newVault(addr)
+	// toReturn, err := client.Sys().EnableAuth()
+	response, err := client.Sys().Unseal("uCnIbTAyd3RgYLBv/GneFAqQ0uWEvmEQG1bg15MN3E4=")
+	if err != nil {
+		// logger.Fatalf("error creating vault client: %v", err)
+		fmt.Printf("Error unsealing vault: %v", err)
+	}
+	fmt.Printf("The %v vault was successfully unsealed!", addr)
+	return response, err
+}
 func main() {
-	fmt.Println("Welcome to Seals")
+	fmt.Println("!! Welcome to Seals !!")
+
+	showVaultStatus("http://192.168.1.16:8200")
+	sealVault("http://192.168.1.16:8200")
+	fmt.Println()
+	fmt.Println(" 🏈💪 Navy-Seals 💪🏈📣 :  NOW VAULT IS SEALED ❗")
+	fmt.Println()
+	showVaultStatus("http://192.168.1.16:8200")
+	unsealVault("http://192.168.1.16:8200")
+	fmt.Println()
+	fmt.Println(" 🏈💪 Navy-Seals 💪🏈📣 :  NOW VAULT IS UNSEALED ❗")
+	fmt.Println()
+	showVaultStatus("http://192.168.1.16:8200")
+
 }
