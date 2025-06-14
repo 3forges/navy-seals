@@ -1,12 +1,23 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"runtime"
 	"time"
 
 	// vapi "github.com/hashicorp/vault/api"
+
+	flags "github.com/jessevdk/go-flags"
 	_ "github.com/joho/godotenv/autoload"
 	vapi "github.com/openbao/openbao/api/v2"
+)
+
+var (
+	version = "master"
+	commit  = "latest"
+	date    = "-"
 )
 
 const (
@@ -35,10 +46,12 @@ type Config struct {
 	CheckInterval    time.Duration `env:"CHECK_INTERVAL"     long:"check-interval" description:"frequency of sealed checks against nodes" yaml:"check_interval"`
 	MaxCheckInterval time.Duration `env:"MAX_CHECK_INTERVAL" long:"max-check-interval" description:"max time that vault-unseal will wait for an unseal check/attempt" yaml:"max_check_interval"`
 
-	AllowSingleNode bool     `env:"ALLOW_SINGLE_NODE" long:"allow-single-node"    description:"allow vault-unseal to run on a single node" yaml:"allow_single_node" hidden:"true"`
-	Nodes           []string `env:"NODES"             long:"nodes" env-delim:","  description:"nodes to connect/provide tokens to (can be provided multiple times & uses comma-separated string for environment variable)" yaml:"vault_nodes"`
-	TLSSkipVerify   bool     `env:"TLS_SKIP_VERIFY"   long:"tls-skip-verify"      description:"disables tls certificate validation: DO NOT DO THIS" yaml:"tls_skip_verify"`
-	Tokens          []string `env:"TOKENS"            long:"tokens" env-delim:"," description:"tokens to provide to nodes (can be provided multiple times & uses comma-separated string for environment variable)" yaml:"unseal_tokens"`
+	AllowSingleNode    bool     `env:"ALLOW_SINGLE_NODE" long:"allow-single-node"    description:"allow vault-unseal to run on a single node" yaml:"allow_single_node" hidden:"true"`
+	Nodes              []string `env:"NODES"             long:"nodes" env-delim:","  description:"nodes to connect/provide tokens to (can be provided multiple times & uses comma-separated string for environment variable)" yaml:"vault_nodes"`
+	TLSSkipVerify      bool     `env:"TLS_SKIP_VERIFY"   long:"tls-skip-verify"      description:"disables tls certificate validation: DO NOT DO THIS" yaml:"tls_skip_verify"`
+	UnsealTokens       []string `env:"UNSEAL_TOKENS"            long:"unseal-tokens" env-delim:"," description:"tokens to provide to nodes (can be provided multiple times & uses comma-separated string for environment variable)" yaml:"unseal_tokens"`
+	UnsealkeysNb       int      `env:"UNSEAL_KEYS_NB"            long:"unseal-keys-nb" description:"number of shared keys to init the openbao vault with (integer, maximum 256)" yaml:"unseal_keys_nb"`
+	UnsealKeysTreshold int      `env:"UNSEAL_KEYS_TRESHOLD"            long:"unseal-keys-treshold" description:"treshold of shared keys to init the openbao vault with (integer, maximum 256)" yaml:"unseal_keys_treshold"`
 
 	NotifyMaxElapsed time.Duration `env:"NOTIFY_MAX_ELAPSED" long:"notify-max-elapsed" description:"max time before the notification can be queued before it is sent" yaml:"notify_max_elapsed"`
 	NotifyQueueDelay time.Duration `env:"NOTIFY_QUEUE_DELAY" long:"notify-queue-delay" description:"time we queue the notification to allow as many notifications to be sent in one go (e.g. if no notification within X time, send all notifications)" yaml:"notify_queue_delay"`
@@ -127,26 +140,96 @@ func showVaultStatus(addr string) {
 		fmt.Printf("🚑 Here is the vault health [response.Standby] : %v", response.Standby)
 	}
 }
-func unsealVault(addr string) (*vapi.SealStatusResponse, error) {
+
+/**
+ * The unsealVault method will pick up the value of the unseal tokens
+ * from the UNSEAL_TOKENS variable in the ./.env file, (thanks to github.com/joho/godotenv/autoload), which value is a comma-separated list of tokens.
+ * e.g. with 17 Unseal Tokens : see ./.env
+ *
+ **/
+// func unsealVault(addr string) (*vapi.SealStatusResponse, error) {
+func unsealVault(addr string) bool {
 	client := newVault(addr)
 	// toReturn, err := client.Sys().EnableAuth()
-	response, err := client.Sys().Unseal("uCnIbTAyd3RgYLBv/GneFAqQ0uWEvmEQG1bg15MN3E4=")
-	if err != nil {
-		// logger.Fatalf("error creating vault client: %v", err)
-		fmt.Printf("Error unsealing vault: %v", err)
+	// theUnsealTokens := conf.UnsealTokens
+	//response, err := client.Sys().Unseal("uCnIbTAyd3RgYLBv/GneFAqQ0uWEvmEQG1bg15MN3E4=")
+	var wasVaultSuccessfullyUnsealed bool
+
+	var numberOfUnsealTokens = len(conf.UnsealTokens)
+	fmt.Printf("🏈💪 Navy-Seals 💪🏈📣 - [func unsealVault(addr string) bool] - numberOfUnsealTokens : %v", numberOfUnsealTokens)
+	if numberOfUnsealTokens >= 1 {
+		fmt.Printf("🏈💪 Navy-Seals 💪🏈📣 - [func unsealVault(addr string) bool] - conf.UnsealTokens[0] : %v", conf.UnsealTokens[0])
 	}
-	fmt.Printf("The %v vault was successfully unsealed!", addr)
+	for i, token := range conf.UnsealTokens {
+		var resp *vapi.SealStatusResponse
+		var err error
+		resp, err = client.Sys().Unseal(token)
+		if err != nil {
+			fmt.Println(fmt.Errorf("🏈💥 Navy-Seals 💥🏈📣 - ERROR using unseal key %d on %v: %w", i+1, addr, err))
+			continue
+		}
+		if !resp.Sealed {
+			fmt.Println(fmt.Errorf("✅ 🏈💪 Navy-Seals 💪🏈📣 ✅ - (Vault was sealed) %v now unsealed with tokens", addr))
+			wasVaultSuccessfullyUnsealed = true
+			break
+		}
+	}
+
+	// fmt.Printf("The %v vault was successfully unsealed!", addr)
+	return wasVaultSuccessfullyUnsealed
+}
+
+/**
+ * Awesome that method works great!
+ * We will need to check about GPG encrypting the shared keys
+ **/
+func initVault(addr string) (*vapi.InitResponse, error) {
+	client := newVault(addr)
+	// toReturn, err := client.Sys().EnableAuth()
+	// theUnsealTokens := conf.UnsealTokens
+	//response, err := client.Sys().Unseal("uCnIbTAyd3RgYLBv/GneFAqQ0uWEvmEQG1bg15MN3E4=")
+
+	var initRequest = new(vapi.InitRequest)
+	initRequest.SecretShares = conf.UnsealkeysNb
+	initRequest.SecretThreshold = conf.UnsealKeysTreshold
+	var response *vapi.InitResponse
+	var err error
+	response, err = client.Sys().Init(initRequest)
+	//var wasVaultSuccessfullyInitialized bool
+
+	if err == nil {
+
+		fmt.Printf("🏈💪 Navy-Seals 💪🏈📣 - [func initVault(addr string)] - successfully init vault : %v", response)
+	} else {
+		fmt.Printf("🏈💥 Navy-Seals 💥🏈📣 - ERROR - [func initVault(addr string)] - failed to init vault : %v", response)
+	}
+
 	return response, err
 }
-func main() {
-	fmt.Println("!! Welcome to Seals !!")
 
+func main() {
+	fmt.Println("!! Welcome to (Navy)-Seals !!")
+	var err error
+	if _, err = flags.Parse(conf); err != nil {
+		var ferr *flags.Error
+		if errors.As(err, &ferr) && ferr.Type == flags.ErrHelp {
+			os.Exit(0)
+		}
+		os.Exit(1)
+	}
+
+	if conf.Version {
+		fmt.Printf("(Navy)-Seals version: %s [%s] (%s, %s), compiled %s\n", version, commit, runtime.GOOS, runtime.GOARCH, date) //nolint:forbidigo
+		os.Exit(0)
+	}
+	// initVault("http://192.168.1.16:8200")
 	showVaultStatus("http://192.168.1.16:8200")
 	sealVault("http://192.168.1.16:8200")
 	fmt.Println()
 	fmt.Println(" 🏈💪 Navy-Seals 💪🏈📣 :  NOW VAULT IS SEALED ❗")
 	fmt.Println()
 	showVaultStatus("http://192.168.1.16:8200")
+
 	unsealVault("http://192.168.1.16:8200")
 	fmt.Println()
 	fmt.Println(" 🏈💪 Navy-Seals 💪🏈📣 :  NOW VAULT IS UNSEALED ❗")
