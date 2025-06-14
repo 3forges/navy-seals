@@ -150,3 +150,7 @@ make
 ./dist/bin/navy-seals
 
 ```
+
+NExt steps:
+
+Use https://github.com/yeqown/go-qrcode to generate QR code for each Unseal Key ?
