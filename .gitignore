@@ -1,2 +1,2 @@
 dist
-.sunseal_keys/
+.tofu_secrets

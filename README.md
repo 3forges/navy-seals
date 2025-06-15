@@ -146,12 +146,34 @@ unset UNSEAL_TOKENS
 
 # Always make sure that UNSEAL_TOKENS is unset and only the vale set i n [./.env] file is ruling
 
-# ./dist/bin/navy-seals -unseal-keys-nb 23 -unseal-keys-treshold 11
+# ./dist/bin/navy-seal -unseal-keys-nb 23 -unseal-keys-treshold 11
 make
-./dist/bin/navy-seals
+./dist/bin/navy-seal
+
+
+./dist/bin/navy-seal --status
+
+./dist/bin/navy-seal --init --unseal-keys-nb 43 --unseal-keys-treshold 22
+
+./dist/bin/navy-seal --status
+
+./dist/bin/navy-seal --seal
+
+./dist/bin/navy-seal --status
+
+./dist/bin/navy-seal --unseal
+
+./dist/bin/navy-seal --status
 
 ```
 
 Next steps:
 
 Use https://github.com/yeqown/go-qrcode to generate QR code for each Unseal Key ?
+done,
+
+Now I will use https://github.com/makiuchi-d/gozxing 
+to read an image file and scan the QRCODE <3
+
+
+
