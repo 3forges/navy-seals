@@ -49,19 +49,22 @@ Now the Vault is not initialiazed, and ready for the `navy-seals` tests. You can
 
 make
 
+#./dist/bin/navy-seal -b 0.0.0.0 -p 8751
+./dist/bin/navy-seal -b localhost -p 8751
+
 # Test Using the list albums endpoint:
 
 curl -X GET \
     --header "Content-Type: application/json" \
-    http://localhost:8765/albums
+    http://localhost:8751/albums
 
 curl -X GET \
     --header "Content-Type: application/json" \
-    http://localhost:8765/albums | jq .
+    http://localhost:8751/albums | jq .
 
 # Test adding an Album:
 
-curl http://localhost:8765/albums \
+curl http://localhost:8751/albums \
     --include \
     --header "Content-Type: application/json" \
     --request "POST" \
@@ -69,15 +72,15 @@ curl http://localhost:8765/albums \
 
 curl -X GET \
     --header "Content-Type: application/json" \
-    http://localhost:8765/albums | jq .
+    http://localhost:8751/albums | jq .
 
 curl -X GET \
     --header "Content-Type: application/json" \
-    http://localhost:8765/albums/3 | jq .
+    http://localhost:8751/albums/3 | jq .
 
 curl -X GET \
     --header "Content-Type: application/json" \
-    http://localhost:8765/albums/4 | jq .
+    http://localhost:8751/albums/4 | jq .
 
 ```
 
