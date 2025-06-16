@@ -49,35 +49,22 @@ Now the Vault is not initialiazed, and ready for the `navy-seals` tests. You can
 
 make
 
-# Test Using the list albums endpoint:
+./dist/bin/navy-seal
 
-curl -X GET \
-    --header "Content-Type: application/json" \
-    http://localhost:8765/albums
 
-curl -X GET \
-    --header "Content-Type: application/json" \
-    http://localhost:8765/albums | jq .
+./dist/bin/navy-seal --status
 
-# Test adding an Album:
+./dist/bin/navy-seal --init --unseal-keys-nb 43 --unseal-keys-treshold 22
 
-curl http://localhost:8765/albums \
-    --include \
-    --header "Content-Type: application/json" \
-    --request "POST" \
-    --data '{"id": "4","title": "The Modern Sound of Betty Carter","artist": "Betty Carter","price": 49.99}'
+./dist/bin/navy-seal --status
 
-curl -X GET \
-    --header "Content-Type: application/json" \
-    http://localhost:8765/albums | jq .
+./dist/bin/navy-seal --seal
 
-curl -X GET \
-    --header "Content-Type: application/json" \
-    http://localhost:8765/albums/3 | jq .
+./dist/bin/navy-seal --status
 
-curl -X GET \
-    --header "Content-Type: application/json" \
-    http://localhost:8765/albums/4 | jq .
+./dist/bin/navy-seal --unseal
+
+./dist/bin/navy-seal --status
 
 ```
 
@@ -94,8 +81,3 @@ kubectl -n ${K8S_NS} delete persistentvolumeclaim/data-${HELM_RELEASE_NAME}-0
 # kubectl -n pesto-openbao delete persistentvolumeclaim/data-pesto-openbao-0
 
 ```
-
-
-## ANNEX: Gin References
-
-* Interesting: https://mcorbin.fr/posts/2022-06-13-gin-golang/

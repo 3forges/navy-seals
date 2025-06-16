@@ -1,0 +1,1 @@
+* About rotating OpenBAO vault root token: https://blog.captaincy.io/how-to-rotate-a-vault-root-token/  

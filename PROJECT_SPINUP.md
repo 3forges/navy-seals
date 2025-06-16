@@ -6,8 +6,8 @@
 go mod init kairos.io/seals
 
 # --
-# 2./ 
-go get -u github.com/gin-gonic/gin
+# 2./ Becuase of https://github.com/gin-gonic/gin/issues/3837#issuecomment-1925580360
+go get -u github.com/gin-gonic/gin@v1.10.1
 
 go mod tidy
 ```
@@ -26,3 +26,8 @@ OKAY About the client I found :
 ```bash
 go get github.com/openbao/openbao/api/v2
 ```
+
+
+## References
+
+* To setup the Gin project: https://dev.to/nikl/using-goland-and-gin-framework-to-build-restful-api-7-steps-2834
