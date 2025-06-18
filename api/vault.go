@@ -2,7 +2,9 @@ package api
 
 import (
 	"fmt"
+	"navy-seals/client"
 	http "net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +20,7 @@ type VaultStatus struct {
 }
 
 var (
+	clientPool = client.NewVaultClientPool(7, 150*time.Second)
 	// defaultVaultInitParams = &VaultInitParams{
 	// 	UnsealKeysNb:       37,
 	// 	UnsealKeysTreshold: 23,
@@ -54,8 +57,38 @@ var (
  * getUnsealKeys responds with the list of all unsealKeys as JSON.
  **/
 func GetVaultStatus(c *gin.Context) {
+	vc, err := clientPool.BorrowVaultClient()
+	//vc, err := client.GetVaultClient()
+	if err != nil {
+		fmt.Printf(" [GetVaultStatus(c *gin.Context)] - Error getting vault client: %v", err)
+	}
+	vaultStatusResponse, err := vc.GetClient().Sys().Health()
+	if err != nil {
+		// logger.Fatalf("error creating vault client: %v", err)
+		fmt.Printf(" [GetVaultStatus(c *gin.Context)] - Error getting vault health: %v", err)
+	}
+
+	if err != nil {
+		// logger.Fatalf("error creating vault client: %v", err)
+		fmt.Printf("Error getting vault health: %v", err)
+	} else {
+		fmt.Printf("🚑 Here is the vault health [response.Initialized] : %v", vaultStatusResponse.Initialized)
+		fmt.Println()
+		fmt.Printf("🚑 Here is the vault health [response.ClusterName] : %v", vaultStatusResponse.ClusterName)
+		fmt.Println()
+		fmt.Printf("🚑 Here is the vault health [response.Sealed] : %v", vaultStatusResponse.Sealed)
+		fmt.Println()
+		fmt.Printf("🚑 Here is the vault health [response.Version] : %v", vaultStatusResponse.Version)
+		fmt.Println()
+		fmt.Printf("🚑 Here is the vault health [response.ServerTimeUTC] : %v", vaultStatusResponse.ServerTimeUTC)
+		fmt.Println()
+		fmt.Printf("🚑 Here is the vault health [response.Standby] : %v", vaultStatusResponse.Standby)
+	}
+	clientPool.ReleaseVaultClient(vc)
 	// fetchedVaultStatus any := nil
-	c.IndentedJSON(http.StatusOK, exampleVaultStatus)
+	// c.IndentedJSON(http.StatusOK, exampleVaultStatus)
+	c.IndentedJSON(http.StatusOK, vaultStatusResponse)
+
 }
 
 /**

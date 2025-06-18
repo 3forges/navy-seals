@@ -1,13 +1,11 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	api "navy-seals/api"
-	"os"
+	"navy-seals/config"
 
 	"github.com/gin-gonic/gin"
-	flags "github.com/jessevdk/go-flags"
 	_ "github.com/joho/godotenv/autoload"
 )
 
@@ -19,18 +17,7 @@ var (
 
 func main() {
 
-	/**
-	 * Command Line start GNU Options parsing with "github.com/jessevdk/go-flags"
-	 **/
-	var err error
-	if _, err = flags.Parse(api.ApiConfig); err != nil {
-		var ferr *flags.Error
-		if errors.As(err, &ferr) && ferr.Type == flags.ErrHelp {
-			os.Exit(0)
-		}
-		os.Exit(1)
-	}
-
+	config.LoadConfig()
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	/**
@@ -39,6 +26,8 @@ func main() {
 	// router.GET("/albums", api.GetAlbums)
 	// router.GET("/albums/:id", api.GetAlbumByID)
 	// router.POST("/albums", api.AddAlbum)
+	router.GET("/vault-status", api.GetVaultStatus)
+
 	/**
 	 * Unseal Keys Endpoints
 	 **/
@@ -46,7 +35,16 @@ func main() {
 	router.GET("/albums/:id", api.GetAlbumByID)
 	router.POST("/albums", api.AddAlbum)
 
-	// router.Run("localhost:8765")
+	// router.Run("192.168.1.12:8751")
+	// router.Run()
+	var listen_on string = fmt.Sprintf("%v:%v", config.ApiConfig.BindAddress, config.ApiConfig.Port)
+	fmt.Printf(" Welcome to navy seals ")
+	fmt.Printf(" listen_on [%v]", listen_on)
 
-	router.Run(fmt.Sprintf("%v:%v", api.ApiConfig.BindAddress, api.ApiConfig.Port))
+	fmt.Printf(" Navy seals VAULT ADDRESS IS [%v]", config.ApiConfig.VaultAddress)
+	fmt.Printf(" Navy seals BIND ADDRESS IS [%v]", config.ApiConfig.BindAddress)
+	fmt.Printf(" Navy seals PORT IS [%v]", config.ApiConfig.Port)
+	// router.Run(listen_on)
+	router.Run("0.0.0.0:8751")
+
 }

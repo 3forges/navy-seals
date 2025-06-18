@@ -1,6 +1,7 @@
 # Seals
 
 In this first release, I iwll deliver a very simple CLI which is able:
+
 * to init an OpenBAO vault
 * to display the status
 * to seal the OpenBAO vault
@@ -52,6 +53,32 @@ make
 #./dist/bin/navy-seal -b 0.0.0.0 -p 8751
 ./dist/bin/navy-seal -b localhost -p 8751
 
+
+# - # -- # 
+# Test the Vault Status endpoint:
+
+curl http://localhost:8751/vault-status | jq .
+
+# $ curl http://localhost:8751/vault-status | jq .
+#   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+#                                  Dload  Upload   Total   Spent    Left  Speed
+# 100   128  100   128    0     0  35684      0 --:--:-- --:--:-- --:--:-- 42666
+# {
+#   "initialized": false,
+#   "sealed": true,
+#   "standby": true,
+#   "server_time_utc": 1750285340,
+#   "version": "2.2.0"
+# }
+# 
+
+
+
+
+
+
+
+
 # Test Using the list albums endpoint:
 
 curl -X GET \
@@ -98,6 +125,15 @@ kubectl -n ${K8S_NS} delete persistentvolumeclaim/data-${HELM_RELEASE_NAME}-0
 
 ```
 
+Now to easily access the openbao service:
+
+```bash
+export HELM_RELEASE_NAME=${HELM_RELEASE_NAME:-'pesto-openbao'}
+export K8S_NS=${K8S_NS:-'pesto-openbao'}
+
+
+kubectl -n ${K8S_NS} port-forward service/${HELM_RELEASE_NAME} --address 0.0.0.0 8200:8200
+```
 
 ## ANNEX: Gin References
 
