@@ -28,6 +28,9 @@ type VaultInitParams struct {
 	UnsealKeysNb       int `json:"UnsealKeysNb"`
 	UnsealKeysTreshold int `json:"UnsealKeysTreshold"`
 }
+type VaultUnsealParams struct {
+	Key string `json:"Key"`
+}
 
 // type VaultInitParams struct {
 // 	UnsealKeysNb       int
@@ -134,4 +137,49 @@ func ExecuteInitVault(params VaultInitParams) (*vapi.InitResponse, error) {
 	}
 	clientPool.ReleaseVaultClient(vc)
 	return initResponse, err
+}
+
+/**
+ * Unseals the vault, and saves Unseal Token as QR codes, and Root Token as a file
+ **/
+func ExecuteUnsealVault(params VaultUnsealParams) (*vapi.SealStatusResponse, error) {
+	fmt.Printf("🏈 Navy-Seals 🏈📣 - [ExecuteUnsealVault(params VaultUnsealParams)] - received JSON PAYLOAD IS: params.Key = %v", params.Key)
+	vc, err := clientPool.BorrowVaultClient()
+	//vc, err := client.GetVaultClient()
+	if err != nil {
+		fmt.Printf(" [ExecuteUnsealVault(params VaultUnsealParams)] - Error getting vault client: %v", err)
+	}
+
+	var unsealResponse *vapi.SealStatusResponse = nil
+	var unsealErr error = nil
+
+	statusResponse, statusErr := FetchVaultStatus()
+	if statusErr != nil {
+		fmt.Println(fmt.Errorf("🏈💥 Navy-Seals 💥🏈📣 - [ExecuteUnsealVault(params VaultUnsealParams)] - ERROR querying vault status key on %v: %v", config.ApiConfig.VaultAddress, statusResponse))
+		// os.Exit(7)
+		return nil, statusErr
+	}
+
+	if statusResponse.Sealed {
+
+		unsealResponse, unsealErr = vc.GetClient().Sys().Unseal(params.Key)
+		//initResponse, initErr = vc.GetClient().Sys().Init(initRequest)
+		//var wasVaultSuccessfullyInitialized bool
+		if unsealErr == nil {
+			fmt.Printf("🏈💪 Navy-Seals 💪🏈📣 - [ExecuteUnsealVault(params VaultUnsealParams)] - successfully unsealed vault : %v", unsealResponse)
+			return unsealResponse, unsealErr
+			// clean the secrets dir
+			// os.RemoveAll(tofu_secrets_dir)
+			// os.Setenv("BAO_TOKEN", initResponse.RootToken) // This does not work because it would only work for children processes, not the currently running one
+
+		} else {
+			fmt.Printf("🏈💥 Navy-Seals 💥🏈📣 - ERROR - [ExecuteUnsealVault(params VaultUnsealParams)] - failed to unseal vault : %v, %v", unsealResponse, unsealErr)
+			return unsealResponse, unsealErr
+		}
+	} else {
+		fmt.Printf("🏈❕ Navy-Seals ❕🏈📣 - WARNING vault already initialized, cancel initializing it: %v", config.ApiConfig.VaultAddress)
+		// os.Exit(11)
+	}
+	clientPool.ReleaseVaultClient(vc)
+	return unsealResponse, unsealErr
 }

@@ -94,14 +94,37 @@ func InitVault(ctx *gin.Context) {
 	}
 }
 
+/**
+ * post an image file of a QR code, and runs the Unseal
+ **/
+func UnsealVault(ctx *gin.Context) {
+	// keys_nb := ctx.Param("keys_nb")
+	// keys_threshold := ctx.Param("keys_threshold")
+	var unsealVaultParams VaultUnsealParams
+
+	if err := ctx.ShouldBindJSON(&unsealVaultParams); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("🏈💥 Navy-Seals 💥🏈📣 - ERROR unsealing vault %v, the payload you provided is not of the expected form : %v", config.ApiConfig.VaultAddress, err.Error())})
+		return
+	}
+
+	fmt.Printf("🏈 Navy-Seals 🏈📣 - [UnsealVault] - received JSON PAYLOAD IS: %v", unsealVaultParams)
+	//fmt.Printf("🏈 Navy-Seals 🏈📣 - [InitVault] - received JSON PAYLOAD IS: %v", initVaultParams)
+	fmt.Printf("🏈 Navy-Seals 🏈📣 - [UnsealVault(c *gin.Context)] - received JSON PAYLOAD IS: params.UnsealKeysNb = %v // params.UnsealKeysTreshold = %v", unsealVaultParams.Key)
+
+	unsealResponse, err := ExecuteUnsealVault(unsealVaultParams)
+
+	if err != nil {
+		fmt.Println(fmt.Errorf("🏈💥 Navy-Seals 💥🏈📣 - ERROR initializing vault %v: %v", config.ApiConfig.VaultAddress, err))
+		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("🏈💥 Navy-Seals 💥🏈📣 - ERROR initializing vault %v: %v", config.ApiConfig.VaultAddress, err)})
+		return
+	} else {
+		ctx.IndentedJSON(http.StatusOK, unsealResponse)
+		// return
+	}
+}
+
 // This will be a POST?PUT?
 func SealVault(c *gin.Context) {
 	// Here I seal the vault, and I return the vault status in the gin context
 	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "OpenBAO Vault now sealed"})
-}
-
-// This will be a POST?PUT?
-func UnsealVault(c *gin.Context) {
-	// Here I Unseal the vault, and I return the vault status in the gin context
-	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "OpenBAO Vault now unsealed"})
 }

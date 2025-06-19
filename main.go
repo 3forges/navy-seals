@@ -28,6 +28,7 @@ func main() {
 	// router.POST("/albums", api.AddAlbum)
 	router.GET("/vault-status", api.GetVaultStatus)
 	router.POST("/vault-init", api.InitVault)
+	router.POST("/vault-unseal", api.UnsealVault)
 	/**
 	 * Unseal Keys Endpoints
 	 **/
