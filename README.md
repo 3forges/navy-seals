@@ -73,6 +73,13 @@ curl http://localhost:8751/vault-status | jq .
 # 
 
 
+curl -X POST -d '{ "keys_nb": 73, "keys_treshold": 35}' http://localhost:8751/vault-init | jq .
+
+
+
+
+
+
 
 
 

@@ -27,7 +27,7 @@ func main() {
 	// router.GET("/albums/:id", api.GetAlbumByID)
 	// router.POST("/albums", api.AddAlbum)
 	router.GET("/vault-status", api.GetVaultStatus)
-
+	router.POST("/vault-init", api.InitVault)
 	/**
 	 * Unseal Keys Endpoints
 	 **/

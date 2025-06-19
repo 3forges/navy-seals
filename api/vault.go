@@ -2,25 +2,17 @@ package api
 
 import (
 	"fmt"
-	"navy-seals/client"
+	"navy-seals/config"
 	http "net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
-
-// unsealKey represents data about a record unsealKey.
-type VaultInitParams struct {
-	UnsealKeysNb       int `json:"keys_nb"`
-	UnsealKeysTreshold int `json:"keys_threshold"`
-}
 
 type VaultStatus struct {
 	Sealed bool `json:"sealed"`
 }
 
 var (
-	clientPool = client.NewVaultClientPool(7, 150*time.Second)
 	// defaultVaultInitParams = &VaultInitParams{
 	// 	UnsealKeysNb:       37,
 	// 	UnsealKeysTreshold: 23,
@@ -57,49 +49,49 @@ var (
  * getUnsealKeys responds with the list of all unsealKeys as JSON.
  **/
 func GetVaultStatus(c *gin.Context) {
-	vc, err := clientPool.BorrowVaultClient()
-	//vc, err := client.GetVaultClient()
-	if err != nil {
-		fmt.Printf(" [GetVaultStatus(c *gin.Context)] - Error getting vault client: %v", err)
-	}
-	vaultStatusResponse, err := vc.GetClient().Sys().Health()
+	vaultStatusResponse, err := FetchVaultStatus()
 	if err != nil {
 		// logger.Fatalf("error creating vault client: %v", err)
-		fmt.Printf(" [GetVaultStatus(c *gin.Context)] - Error getting vault health: %v", err)
+		fmt.Printf(" [GetVaultStatus(c *gin.Context)] - Error getting vault status: %v", err)
 	}
-
-	if err != nil {
-		// logger.Fatalf("error creating vault client: %v", err)
-		fmt.Printf("Error getting vault health: %v", err)
-	} else {
-		fmt.Printf("🚑 Here is the vault health [response.Initialized] : %v", vaultStatusResponse.Initialized)
-		fmt.Println()
-		fmt.Printf("🚑 Here is the vault health [response.ClusterName] : %v", vaultStatusResponse.ClusterName)
-		fmt.Println()
-		fmt.Printf("🚑 Here is the vault health [response.Sealed] : %v", vaultStatusResponse.Sealed)
-		fmt.Println()
-		fmt.Printf("🚑 Here is the vault health [response.Version] : %v", vaultStatusResponse.Version)
-		fmt.Println()
-		fmt.Printf("🚑 Here is the vault health [response.ServerTimeUTC] : %v", vaultStatusResponse.ServerTimeUTC)
-		fmt.Println()
-		fmt.Printf("🚑 Here is the vault health [response.Standby] : %v", vaultStatusResponse.Standby)
-	}
-	clientPool.ReleaseVaultClient(vc)
-	// fetchedVaultStatus any := nil
-	// c.IndentedJSON(http.StatusOK, exampleVaultStatus)
 	c.IndentedJSON(http.StatusOK, vaultStatusResponse)
 
 }
 
 /**
- * Vault Init
+ * Vault Inii
+ * ENDPOINT /vault-init
+ * -
+ * Payload should be of the following form:
+ * {
+ *   keys_nb: 73,
+ *   keys_treshold: 35
+ * }
  **/
-func InitVault(c *gin.Context) {
-	keys_nb := c.Param("keys_nb")
-	keys_threshold := c.Param("keys_threshold")
+func InitVault(ctx *gin.Context) {
+	// keys_nb := ctx.Param("keys_nb")
+	// keys_threshold := ctx.Param("keys_threshold")
+	var initVaultParams VaultInitParams
 
-	// initializes the vault
-	c.IndentedJSON(http.StatusCreated, gin.H{"message": fmt.Sprintf("Initialized OpenBAO Vault with keys_nb = [%v] and keys_threshold = [%v]", keys_nb, keys_threshold)})
+	if err := ctx.ShouldBindJSON(&initVaultParams); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": fmt.Sprintf("🏈💥 Navy-Seals 💥🏈📣 - ERROR initializing vault %v, the payload you provided is not of the expected form : %v", config.ApiConfig.VaultAddress, err.Error())})
+		return
+	}
+
+	fmt.Printf("🏈 Navy-Seals 🏈📣 - [InitVault] - received JSON PAYLOAD IS: %v", initVaultParams)
+	//fmt.Printf("🏈 Navy-Seals 🏈📣 - [InitVault] - received JSON PAYLOAD IS: %v", initVaultParams)
+	fmt.Printf("🏈 Navy-Seals 🏈📣 - [InitVault(c *gin.Context)] - received JSON PAYLOAD IS: params.UnsealKeysNb = %v // params.UnsealKeysTreshold = %v", initVaultParams.UnsealKeysNb, initVaultParams.UnsealKeysTreshold)
+
+	initResponse, err := ExecuteInitVault(initVaultParams)
+
+	if err != nil {
+		fmt.Println(fmt.Errorf("🏈💥 Navy-Seals 💥🏈📣 - ERROR initializing vault %v: %v", config.ApiConfig.VaultAddress, err))
+		ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("🏈💥 Navy-Seals 💥🏈📣 - ERROR initializing vault %v: %v", config.ApiConfig.VaultAddress, err)})
+		return
+	} else {
+		ctx.IndentedJSON(http.StatusCreated, initResponse)
+		// return
+	}
 }
 
 // This will be a POST?PUT?
