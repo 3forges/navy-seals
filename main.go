@@ -46,6 +46,7 @@ func main() {
 	fmt.Printf(" Navy seals BIND ADDRESS IS [%v]", config.ApiConfig.BindAddress)
 	fmt.Printf(" Navy seals PORT IS [%v]", config.ApiConfig.Port)
 	// router.Run(listen_on)
-	router.Run("0.0.0.0:8751")
+	//router.Run("0.0.0.0:8751")
+	router.RunTLS("0.0.0.0:8751", "./navyseals.pesto.io.pem", "./navyseals.pesto.io-key.pem")
 
 }

@@ -145,3 +145,20 @@ kubectl -n ${K8S_NS} port-forward service/${HELM_RELEASE_NAME} --address 0.0.0.0
 ## ANNEX: Gin References
 
 * Interesting: https://mcorbin.fr/posts/2022-06-13-gin-golang/
+
+
+## ANNEX: DEv mode TLS Cert
+
+```bash
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=France/L=Chamalières/O=3Forges/OU=Devops/CN=192.168.1.12"
+
+
+
+openssl req -x509 -newkey ec -pkeyopt c_paramgen_curve:secp384r1 -days 3650 \
+  -nodes -keyout navyseals.pesto.io.key -out navyseals.pesto.io.crt -subj "/CN=navyseals.pesto.io" \
+  -addext "subjectAltName=DNS:navyseals.pesto.io,DNS:*.pesto.io,IP:192.168.1.12"
+
+openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
+    -subj "/C=FR/ST=Auvergne/L=Chamalières/O=Global Security/OU=RnD Department/CN=navyseals.pesto.io" \
+    -keyout navyseals.pesto.io.key  -out navyseals.pesto.io.crt
+```
