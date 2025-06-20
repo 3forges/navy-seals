@@ -73,9 +73,9 @@ curl http://localhost:8751/vault-status | jq .
 # 
 
 
-curl -X POST -d '{ "keys_nb": 73, "keys_treshold": 35}' http://localhost:8751/vault-init | jq .
+curl -X POST -d '{ "UnsealKeysNb": 73, "UnsealKeysTreshold": 17}' http://localhost:8751/vault-init | jq .
 
-
+curl --insecure -X POST -d '{ "UnsealKeysNb": 73, "UnsealKeysTreshold": 17}' https://localhost:8751/vault-init | jq .
 
 
 
@@ -149,16 +149,14 @@ kubectl -n ${K8S_NS} port-forward service/${HELM_RELEASE_NAME} --address 0.0.0.0
 
 ## ANNEX: DEv mode TLS Cert
 
+I used `mkcert`, installed on windows with powershell like this:
+
+```Powershell
+choco install mkcert
+```
+
+* Then in Git bash for Windows executed as administrator, I ran:
+
 ```bash
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=France/L=Chamalières/O=3Forges/OU=Devops/CN=192.168.1.12"
-
-
-
-openssl req -x509 -newkey ec -pkeyopt c_paramgen_curve:secp384r1 -days 3650 \
-  -nodes -keyout navyseals.pesto.io.key -out navyseals.pesto.io.crt -subj "/CN=navyseals.pesto.io" \
-  -addext "subjectAltName=DNS:navyseals.pesto.io,DNS:*.pesto.io,IP:192.168.1.12"
-
-openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
-    -subj "/C=FR/ST=Auvergne/L=Chamalières/O=Global Security/OU=RnD Department/CN=navyseals.pesto.io" \
-    -keyout navyseals.pesto.io.key  -out navyseals.pesto.io.crt
+mkcert navyseals.pesto.io
 ```

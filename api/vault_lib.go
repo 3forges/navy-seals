@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	clientPool = client.NewVaultClientPool(7, 150*time.Second)
+	clientPool = client.NewVaultClientPool(70, 2*time.Second)
 	// defaultVaultInitParams = &VaultInitParams{
 	// 	UnsealKeysNb:       37,
 	// 	UnsealKeysTreshold: 23,
