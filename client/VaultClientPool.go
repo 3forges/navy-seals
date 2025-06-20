@@ -30,6 +30,7 @@ func NewVaultClientPool(maxVaultClients int, timeout time.Duration) *VaultClient
 }
 
 func (p *VaultClientPool) BorrowVaultClient() (*VaultClient, error) {
+	fmt.Printf("\nNAVY SEAL VAULT CLIENTS POOL - [BorrowVaultClient()] - POOL SIZE IS (before mutex stuff): %v", len(p.clients))
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	fmt.Printf("\nNAVY SEAL VAULT CLIENTS POOL - [BorrowVaultClient()] - POOL SIZE IS: %v", len(p.clients))

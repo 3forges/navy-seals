@@ -75,6 +75,13 @@ func FetchVaultStatus() (*vapi.HealthResponse, error) {
  **/
 func ExecuteInitVault(params VaultInitParams) (*vapi.InitResponse, error) {
 	fmt.Printf("🏈 Navy-Seals 🏈📣 - [ExecuteInitVault(params VaultInitParams)] - received JSON PAYLOAD IS: params.UnsealKeysNb = %v // params.UnsealKeysTreshold = %v", params.UnsealKeysNb, params.UnsealKeysTreshold)
+	statusResponse, statusErr := FetchVaultStatus()
+	if statusErr != nil {
+		fmt.Println(fmt.Errorf("🏈💥 Navy-Seals 💥🏈📣 - [ExecuteInitVault(params VaultInitParams)] - ERROR querying vault status key on %v: %v", config.ApiConfig.VaultAddress, statusResponse))
+		// os.Exit(7)
+		return nil, statusErr
+	}
+
 	vc, err := clientPool.BorrowVaultClient()
 	//vc, err := client.GetVaultClient()
 	if err != nil {
@@ -83,13 +90,6 @@ func ExecuteInitVault(params VaultInitParams) (*vapi.InitResponse, error) {
 
 	var initResponse *vapi.InitResponse = nil
 	var initErr error = nil
-
-	statusResponse, statusErr := FetchVaultStatus()
-	if statusErr != nil {
-		fmt.Println(fmt.Errorf("🏈💥 Navy-Seals 💥🏈📣 - [ExecuteInitVault(params VaultInitParams)] - ERROR querying vault status key on %v: %v", config.ApiConfig.VaultAddress, statusResponse))
-		// os.Exit(7)
-		return nil, statusErr
-	}
 
 	if !statusResponse.Initialized {
 		var initRequest = new(vapi.InitRequest)
@@ -144,6 +144,12 @@ func ExecuteInitVault(params VaultInitParams) (*vapi.InitResponse, error) {
  **/
 func ExecuteUnsealVault(params VaultUnsealParams) (*vapi.SealStatusResponse, error) {
 	fmt.Printf("🏈 Navy-Seals 🏈📣 - [ExecuteUnsealVault(params VaultUnsealParams)] - received JSON PAYLOAD IS: params.Key = %v", params.Key)
+	statusResponse, statusErr := FetchVaultStatus()
+	if statusErr != nil {
+		fmt.Println(fmt.Errorf("🏈💥 Navy-Seals 💥🏈📣 - [ExecuteUnsealVault(params VaultUnsealParams)] - ERROR querying vault status key on %v: %v", config.ApiConfig.VaultAddress, statusResponse))
+		// os.Exit(7)
+		return nil, statusErr
+	}
 	vc, err := clientPool.BorrowVaultClient()
 	//vc, err := client.GetVaultClient()
 	if err != nil {
@@ -152,13 +158,6 @@ func ExecuteUnsealVault(params VaultUnsealParams) (*vapi.SealStatusResponse, err
 
 	var unsealResponse *vapi.SealStatusResponse = nil
 	var unsealErr error = nil
-
-	statusResponse, statusErr := FetchVaultStatus()
-	if statusErr != nil {
-		fmt.Println(fmt.Errorf("🏈💥 Navy-Seals 💥🏈📣 - [ExecuteUnsealVault(params VaultUnsealParams)] - ERROR querying vault status key on %v: %v", config.ApiConfig.VaultAddress, statusResponse))
-		// os.Exit(7)
-		return nil, statusErr
-	}
 
 	if statusResponse.Sealed {
 
