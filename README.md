@@ -58,7 +58,7 @@ make
 # Test the Vault Status endpoint:
 
 curl http://localhost:8751/vault-status | jq .
-
+curl --insecure https://localhost:8751/vault-status
 # $ curl http://localhost:8751/vault-status | jq .
 #   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
 #                                  Dload  Upload   Total   Spent    Left  Speed
@@ -75,7 +75,7 @@ curl http://localhost:8751/vault-status | jq .
 
 curl -X POST -d '{ "UnsealKeysNb": 73, "UnsealKeysTreshold": 17}' http://localhost:8751/vault-init | jq .
 
-curl --insecure -X POST -d '{ "UnsealKeysNb": 73, "UnsealKeysTreshold": 17}' https://localhost:8751/vault-init | jq .
+curl --insecure -X POST -d '{ "UnsealKeysNb": 17, "UnsealKeysTreshold": 3}' https://localhost:8751/vault-init | jq .
 
 
 
