@@ -23,19 +23,29 @@ func main() {
 	/**
 	 * Albums Endpoints
 	 **/
-	// router.GET("/albums", api.GetAlbums)
-	// router.GET("/albums/:id", api.GetAlbumByID)
-	// router.POST("/albums", api.AddAlbum)
-	router.GET("/vault-status", api.GetVaultStatus)
-	router.POST("/vault-init", api.InitVault)
-	router.POST("/vault-unseal", api.UnsealVault)
-	/**
-	 * Unseal Keys Endpoints
-	 **/
 	router.GET("/albums", api.GetAlbums)
 	router.GET("/albums/:id", api.GetAlbumByID)
 	router.POST("/albums", api.AddAlbum)
+	// router.GET("/albums", api.GetAlbums)
+	// router.GET("/albums/:id", api.GetAlbumByID)
+	// router.POST("/albums", api.AddAlbum)
 
+	/**
+	 * Vault Endpoints
+	 **/
+	router.GET("/vault-status", api.GetVaultStatus)
+	router.POST("/vault-init", api.InitVault)
+	router.POST("/vault-unseal", api.UnsealVault)
+
+	/**
+	 * Telegram Endpoints
+	 **/
+	router.GET("/tg-bot-user-id", api.GetBotUserUniqueID)
+	router.GET("/tg-bot-config/:id", api.WaitUserMessageByID)
+
+	/**
+	 * Server start up
+	 **/
 	// router.Run("192.168.1.12:8751")
 	// router.Run()
 	var listen_on string = fmt.Sprintf("%v:%v", config.ApiConfig.BindAddress, config.ApiConfig.Port)

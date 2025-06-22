@@ -51,7 +51,28 @@ Now the Vault is not initialiazed, and ready for the `navy-seals` tests. You can
 make
 
 #./dist/bin/navy-seal -b 0.0.0.0 -p 8751
-./dist/bin/navy-seal -b localhost -p 8751
+# ./dist/bin/navy-seal -b localhost -p 8751
+
+./dist/bin/navy-seal -b localhost -p 8751 -a "http://192.168.1.16:8200"
+# -
+# dev mode
+go run main.go -b localhost -p 8751 -a "http://192.168.1.16:8200"
+
+# ---
+# Live reload
+air -build.args_bin -b localhost -p 8751 -a "http://192.168.1.16:8200"
+
+# - # -- #
+# Test the telgram stuff
+
+curl --insecure https://localhost:8751/tg-bot-user-id
+
+# 019798a2-b9ce-78cb-be60-71ce74840c3e
+
+export TG_BOT_USER_UNIQUEID='019798a2-b9ce-78cb-be60-71ce74840c3e'
+
+curl --insecure https://localhost:8751/tg-bot-config/${TG_BOT_USER_UNIQUEID}
+
 
 
 # - # -- # 
@@ -159,4 +180,26 @@ choco install mkcert
 
 ```bash
 mkcert navyseals.pesto.io
+```
+
+
+## Dev tools
+
+I use  go install github.com/air-verse/air@latest for live reloading
+
+air works great now
+
+## Telegram
+
+Ok it works even if there arestill things i need to find out about
+
+```bash
+Utilisateur@Utilisateur-PC MINGW64 ~
+$ export TG_BOT_USER_UNIQUEID='01979948-9c63-7559-bce1-acc44803c403'                                                                        
+Utilisateur@Utilisateur-PC MINGW64 ~
+$ curl --insecure -H 'Accept: application/json' -H 'Content-Type: application/json' https://localhost:8751/tg-bot-config/${TG_BOT_USER_UNIQUEID}
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:--  0:06:45 --:--:--     0
+
 ```

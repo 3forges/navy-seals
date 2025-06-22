@@ -47,10 +47,11 @@ type NavySealsConfig struct {
 	UnSeal                    bool `short:"u" long:"unseal" description:"Unseal the OpenBAO vault from th QR codes found inside the 'tofu_secrets_dir' Folder, and exit"`
 	Status                    bool `short:"t" long:"status" description:"Show the Status of the OpenBAO vault, and exit"`
 	// ConfigPath         string   `env:"CONFIG_PATH" short:"c" long:"config" description:"path to configuration file" value-name:"PATH"`
-	BindAddress  string `env:"BIND_ADDRESS"            long:"bind" short:"b" description:"bind address" yaml:"bind"`
-	Port         int    `env:"PORT"          short:"p"  long:"port" description:"port number (integer, maximum 65535)" yaml:"port"`
-	VaultAddress string `env:"VAULT_ADDRESS"   short:"a"         long:"vault-address" description:"the OpenBAO vault service address" yaml:"vault_address"`
-	Log          struct {
+	BindAddress      string `env:"BIND_ADDRESS"            long:"bind" short:"b" description:"bind address" yaml:"bind"`
+	Port             int    `env:"PORT"          short:"p"  long:"port" description:"port number (integer, maximum 65535)" yaml:"port"`
+	VaultAddress     string `env:"VAULT_ADDRESS"   short:"a"         long:"vault-address" description:"the OpenBAO vault service address" yaml:"vault_address"`
+	TelegramBotToken string `env:"TELEGRAM_BOT_TOKEN"         long:"telegram-bot-token" description:"the Telegram Bot Token" yaml:"telegram_bot_token"`
+	Log              struct {
 		Path   string `env:"LOG_PATH"  long:"path"    description:"path to log output to" value-name:"PATH"`
 		Quiet  bool   `env:"LOG_QUIET" long:"quiet"   description:"disable logging to stdout (also: see levels)"`
 		Level  string `env:"LOG_LEVEL" long:"level"   default:"info" choice:"debug" choice:"info" choice:"warn" choice:"error" choice:"fatal"  description:"logging level"`
