@@ -104,6 +104,7 @@ func (c *BotClient) WaitForUserToSendUUIDtoBot() bool {
 			panic(err)
 		}
 		updates.Clear()
+		break
 	}
 
 	return true
