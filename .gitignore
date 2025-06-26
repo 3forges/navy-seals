@@ -1,2 +1,5 @@
 dist
 .tofu_secrets
+# ---
+# Also ignore the air temporary dir
+tmp
