@@ -74,7 +74,7 @@ type BotUserUniqueID struct {
  **/
 
 /**
- * Wait for the user to send
+ * Wait for the user to send the uuid and we can get the ChatID we need to send the QRcode only to him
  **/
 func WaitUserMessageByID(c *gin.Context) {
 	id := c.Param("id")
@@ -85,7 +85,9 @@ func WaitUserMessageByID(c *gin.Context) {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("BotClient of ID [%v] not found", id)})
 	} else {
 		client.WaitForUserToSendUUIDtoBot()
-		client.SendTestMessage("Par Toutatis! Les Gaulois!")
+		err := client.SendTestMessage("Par Toutatis! Les Gaulois!")
+		fmt.Println(fmt.Sprintf(" DEBUG JBL - client.SendTestMessage returned this error:", err))
+		client.SendQRCode("./.tofu_secrets/.unseal_keys/unseal_key_1.jpeg")
 		c.IndentedJSON(http.StatusOK, gin.H{"message": fmt.Sprintf("BotClient of ID [%v] is now Ready to send the Unseal Key QR code!  found", id)})
 	}
 

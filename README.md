@@ -64,6 +64,10 @@ air -build.args_bin -b localhost -p 8751 -a "http://192.168.1.16:8200"
 
 # - # -- #
 # Test the telgram stuff
+export TELEGRAM_APITOKEN='xxxxxxxxxx'
+
+air -build.args_bin -b localhost -p 8751 -a "http://192.168.1.16:8200"
+
 
 curl --insecure https://localhost:8751/tg-bot-user-id
 

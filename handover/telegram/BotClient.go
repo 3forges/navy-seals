@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	uuid "github.com/gofrs/uuid/v5"
@@ -60,8 +61,118 @@ func (c *BotClient) GetBotUserUniqueID() string {
 /**
  * This method will get the ChatID
  **/
-
 func (c *BotClient) WaitForUserToSendUUIDtoBot() bool {
+	// Create a new UpdateConfig struct with an offset of 0. Offsets are used
+	// to make sure Telegram knows we've handled previous values and we don't
+	// need them repeated.
+	updateConfig := tgbotapi.NewUpdate(0)
+	//tgbotapi.new
+
+	// Tell Telegram we should wait up to 30 seconds on each request for an
+	// update. This way we can get information just as quickly as making many
+	// frequent requests without having to send nearly as many.
+	updateConfig.Timeout = 30
+	// updateConfig.AllowedUpdates = {}
+
+	// Start polling Telegram for updates.
+	var updates []tgbotapi.Update
+	//updates = c.bot.GetUpdatesChan(updateConfig)
+	updates, err := c.bot.GetUpdates(updateConfig)
+	if err != nil {
+		log.Println(err)
+		log.Println("Failed to get updates, retrying in 3 seconds...")
+		time.Sleep(time.Second * 3)
+
+		return false
+	}
+
+	for _, update := range updates {
+		// if update.UpdateID >= config.Offset {
+		// 	config.Offset = update.UpdateID + 1
+		// 	ch <- update
+		// }
+		if update.Message == nil {
+			continue
+		}
+		c.ChatID = update.Message.Chat.ID
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Par Toutatis! Le bot est prêt à envoyer le QRcode !!! ")
+		msg.ReplyToMessageID = update.Message.MessageID
+		// Okay, we're sending our message off! We don't care about the message
+		// we just sent, so we'll discard it.
+		if _, err := c.bot.Send(msg); err != nil {
+			// Note that panics are a bad way to handle errors. Telegram can
+			// have service outages or network errors, you should retry sending
+			// messages or more gracefully handle failures.
+			panic(err)
+		}
+		break
+	}
+	fmt.Println(fmt.Sprintf("JBL DEBUG HERE WE ARE AT END OF [WaitForUserToSendUUIDtoBot()] "))
+	return true
+}
+
+/**
+ * This method will get the ChatID
+ **/
+
+func (c *BotClient) WaitForUserToSendUUIDtoBot_try2() bool {
+	// Create a new UpdateConfig struct with an offset of 0. Offsets are used
+	// to make sure Telegram knows we've handled previous values and we don't
+	// need them repeated.
+	updateConfig := tgbotapi.NewUpdate(0)
+
+	// Tell Telegram we should wait up to 30 seconds on each request for an
+	// update. This way we can get information just as quickly as making many
+	// frequent requests without having to send nearly as many.
+	updateConfig.Timeout = 30
+
+	// Start polling Telegram for updates.
+	var updates tgbotapi.UpdatesChannel
+	updates = c.bot.GetUpdatesChan(updateConfig)
+
+	// Let's go through each update that we're getting from Telegram.
+	for update := range updates {
+		// Telegram can send many types of updates depending on what your Bot
+		// is up to. We only want to look at messages for now, so we can
+		// discard any other updates.
+		if update.Message == nil {
+			continue
+		}
+
+		// Now that we know we've gotten a new message, we can:
+		// 1./ We'll take the Chat ID and set this instance ChatID Filed, to keep it
+		c.ChatID = update.Message.Chat.ID
+		// 2./ We will construct and send a reply to confirm the Bot can snd message to the specific user
+		//
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Par Toutatis! Le bot est prêt à envoyer le QRcode !!! ")
+
+		// We'll also say that this message is a reply to the previous message.
+		// For any other specifications than Chat ID or Text, you'll need to
+		// set fields on the `MessageConfig`.
+		msg.ReplyToMessageID = update.Message.MessageID
+		// Okay, we're sending our message off! We don't care about the message
+		// we just sent, so we'll discard it.
+		if _, err := c.bot.Send(msg); err != nil {
+			// Note that panics are a bad way to handle errors. Telegram can
+			// have service outages or network errors, you should retry sending
+			// messages or more gracefully handle failures.
+			panic(err)
+		}
+		//updates.Clear()
+		// defer close(updates)
+		// update.
+		break
+		// return true
+	}
+	fmt.Println(fmt.Sprintf("JBL DEBUG HERE WE ARE AT END OF [WaitForUserToSendUUIDtoBot()] "))
+	return true
+}
+
+/**
+ * This method will get the ChatID
+ **/
+
+func (c *BotClient) WaitForUserToSendUUIDtoBot_try1() bool {
 	// Create a new UpdateConfig struct with an offset of 0. Offsets are used
 	// to make sure Telegram knows we've handled previous values and we don't
 	// need them repeated.
@@ -137,7 +248,7 @@ func (c *BotClient) SendQRCode(pathToQRcodeFile string) error { // (tgbotapi.Mes
 	// message, err := c.bot.Send(tgbotapi.NewMediaGroup(int64(c.ChatID), photoFileBytes))
 	//.NewChatPhoto(int64(chatID), photoFileBytes))
 
-	msg := tgbotapi.NewPhoto(int64(c.ChatID), tgbotapi.FilePath("tests/image.jpg"))
+	msg := tgbotapi.NewPhoto(int64(c.ChatID), tgbotapi.FilePath(pathToQRcodeFile))
 	msg.Caption = "Your Unseal Key"
 	_, err := c.bot.Send(msg)
 
