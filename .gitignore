@@ -3,3 +3,6 @@ dist
 # ---
 # Also ignore the air temporary dir
 tmp
+
+# ---
+node_modules

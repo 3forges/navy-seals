@@ -95,6 +95,15 @@ func (c *BotClient) WaitForUserToSendUUIDtoBot() bool {
 			continue
 		}
 		c.ChatID = update.Message.Chat.ID
+		fmt.Println(fmt.Sprintf(" [(c *BotClient) WaitForUserToSendUUIDtoBot()] - DEBUG JBL START DEBUGGING"))
+
+		fmt.Println(fmt.Sprintf(" [(c *BotClient) WaitForUserToSendUUIDtoBot()] - DEBUG JBL the catched [update.Message.Chat.ID] is  : [%v]", update.Message.Chat.ID))
+		fmt.Println(fmt.Sprintf(" [(c *BotClient) WaitForUserToSendUUIDtoBot()] - DEBUG JBL the catched [update.Message.MessageID] is  : [%v]", update.Message.MessageID))
+		fmt.Println(fmt.Sprintf(" [(c *BotClient) WaitForUserToSendUUIDtoBot()] - DEBUG JBL the catched [update.Message.Chat.Type] is  : [%v]", update.Message.Chat.Type))
+		fmt.Println(fmt.Sprintf(" [(c *BotClient) WaitForUserToSendUUIDtoBot()] - DEBUG JBL the catched [update.Message.Chat.Description] is  : [%v]", update.Message.Chat.Description))
+		fmt.Println(fmt.Sprintf(" [(c *BotClient) WaitForUserToSendUUIDtoBot()] - DEBUG JBL the catched [update.Message.Chat.Title] is  : [%v]", update.Message.Chat.Title))
+		fmt.Println(fmt.Sprintf(" [(c *BotClient) WaitForUserToSendUUIDtoBot()] - DEBUG JBL the [updates] array length is len(updates) = [%v]", len(updates)))
+
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Par Toutatis! Le bot est prêt à envoyer le QRcode !!! ")
 		msg.ReplyToMessageID = update.Message.MessageID
 		// Okay, we're sending our message off! We don't care about the message
@@ -105,6 +114,7 @@ func (c *BotClient) WaitForUserToSendUUIDtoBot() bool {
 			// messages or more gracefully handle failures.
 			panic(err)
 		}
+
 		break
 	}
 	fmt.Println(fmt.Sprintf("JBL DEBUG HERE WE ARE AT END OF [WaitForUserToSendUUIDtoBot()] "))
@@ -164,7 +174,7 @@ func (c *BotClient) WaitForUserToSendUUIDtoBot_try2() bool {
 		break
 		// return true
 	}
-	fmt.Println(fmt.Sprintf("JBL DEBUG HERE WE ARE AT END OF [WaitForUserToSendUUIDtoBot()] "))
+	fmt.Println(fmt.Sprintf("JBL DEBUG HERE WE ARE AT END OF [WaitForUserToSendUUIDtoBot_try2()] "))
 	return true
 }
 
@@ -260,7 +270,7 @@ func (c *BotClient) SendQRCode(pathToQRcodeFile string) error { // (tgbotapi.Mes
 }
 
 func (c *BotClient) SendTestMessage(pathToQRcodeFile string) error { // (tgbotapi.Message, error)
-	msg := tgbotapi.NewMessage(int64(c.ChatID), "A test message from the test library in telegram-bot-api")
+	msg := tgbotapi.NewMessage(int64(c.ChatID), "A test message from the test library in telegram-bot-api and the pathToQRcodeFile is : " + pathToQRcodeFile)
 	msg.ParseMode = tgbotapi.ModeMarkdown
 	_, err := c.bot.Send(msg)
 	return err

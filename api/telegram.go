@@ -78,12 +78,22 @@ type BotUserUniqueID struct {
  **/
 func WaitUserMessageByID(c *gin.Context) {
 	id := c.Param("id")
+	// fmt.Println(fmt.Sprintf(" [WaitUserMessageByID(c *gin.Context)] - DEBUG JBL the telegram BOT ID is : [%v]", id))
+	fmt.Printf(" [WaitUserMessageByID(c *gin.Context)] - DEBUG JBL the telegram BOT ID is : [%v]", id)
+	fmt.Println("")
 	// Now we need to retrieve
 	client, err := GetBotClientByID(id)
+
+	fmt.Printf(" [WaitUserMessageByID(c *gin.Context)] - DEBUG JBL the retrieved telegram client has this ID: [%v]", client.ID)
+	fmt.Println("")
+	fmt.Printf(" [WaitUserMessageByID(c *gin.Context)] - DEBUG JBL the retrieved telegram client has this ChatID: [%v]", client.ChatID)
+	fmt.Println("")
 	if err != nil {
 		fmt.Println(fmt.Sprintf("DEBUG JBL getting the bot client encountered an error: %v", err))
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("BotClient of ID [%v] not found", id)})
 	} else {
+		fmt.Println(fmt.Sprintf(" [WaitUserMessageByID(c *gin.Context)] - JUST BEFORE call to client.WaitForUserToSendUUIDtoBot() - DEBUG JBL the retrieved telegram client has this ID: [%v]", client.ID))
+		fmt.Println(fmt.Sprintf(" [WaitUserMessageByID(c *gin.Context)] - JUST BEFORE call to client.WaitForUserToSendUUIDtoBot() - DEBUG JBL the retrieved telegram client has this ChatID: [%v]", client.ChatID))
 		client.WaitForUserToSendUUIDtoBot()
 		err := client.SendTestMessage("Par Toutatis! Les Gaulois!")
 		fmt.Println(fmt.Sprintf(" DEBUG JBL - client.SendTestMessage returned this error:", err))
@@ -93,8 +103,8 @@ func WaitUserMessageByID(c *gin.Context) {
 
 }
 
-// getAlbumByID locates the album whose ID value matches the id
-// parameter sent by the client, then returns that album as a response.
+// GetBotClientByID retrieves from pool the BotClient whose ID value matches the id
+// provided parameter, then returns that BotClient as a response, or an error, if there is no BotClient with a matching ID in the pool.
 func GetBotClientByID(id string) (*handover_telegram.BotClient, error) {
 
 	var err error
@@ -103,10 +113,11 @@ func GetBotClientByID(id string) (*handover_telegram.BotClient, error) {
 	// an album whose ID value matches the parameter.
 	for _, client := range botClients {
 		if client.ID == id {
+			fmt.Printf("[GetBotClientByID(id string)] - BotClient of ID [%v] was successfully found", id)
 			return client, nil
 		}
 	}
 
-	err = errors.New(fmt.Sprintf("BotClient of ID [%v] not found", id))
+	err = errors.New(fmt.Sprintf("[GetBotClientByID(id string)] - BotClient of ID [%v] not found", id))
 	return &handover_telegram.BotClient{}, err
 }

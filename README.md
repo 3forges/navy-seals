@@ -73,7 +73,7 @@ curl --insecure https://localhost:8751/tg-bot-user-id
 
 # 019798a2-b9ce-78cb-be60-71ce74840c3e
 
-export TG_BOT_USER_UNIQUEID='019798a2-b9ce-78cb-be60-71ce74840c3e'
+export TG_BOT_USER_UNIQUEID='01995e04-4fa2-7f4d-a5bd-8f6747be9c19'
 
 curl --insecure https://localhost:8751/tg-bot-config/${TG_BOT_USER_UNIQUEID}
 
